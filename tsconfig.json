@@ -14,15 +14,11 @@
     "jsx": "preserve",
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
-
     "baseUrl": ".",
     "paths": {
       "@/*": ["*"],
-      "@/lib/*": ["lib/*"],
-      "@/types": ["types.ts"],
       "@/styles/*": ["styles/*"]
     },
-
     "plugins": [{ "name": "next" }]
   },
   "include": [
