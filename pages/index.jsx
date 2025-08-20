@@ -1,5 +1,5 @@
 // pages/index.jsx
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
@@ -27,10 +27,10 @@ export default function Home() {
   const filtered = useMemo(() => {
     const ql = q.trim().toLowerCase();
     return jobs.filter(j => {
-      const hay = [j.title, j.businessName, j.city, j.state, j.postalCode, j.category]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+      const hay = [
+        j.title, j.businessName, j.category, j.city, j.state, j.postalCode,
+        j.employmentType, j.jobLocationType
+      ].filter(Boolean).join(' ').toLowerCase();
       const matchesQ = !ql || hay.includes(ql);
       const matchesCategory = !category || j.category === category;
       return matchesQ && matchesCategory;
@@ -38,16 +38,24 @@ export default function Home() {
   }, [jobs, q, category]);
 
   return (
-    <main className="container" style={{ fontFamily: 'system-ui' }}>
+    <main className="container">
       <header className="header">
-        <div className="logo"><img src="/bbb-logo.png" alt="BBB" width={56} height={56} /></div>
+        <div className="logo">
+          <img src="/bbb-logo.png" alt="BBB" />
+        </div>
         <h1>Find and Apply for a Job with a BBB Trusted Accredited Business</h1>
       </header>
 
-      <div className="card" style={{ display: 'grid', gap: 12 }}>
+      {/* Hero image above search */}
+      <div className="hero-wrap">
+        <img src="/FindAJob.jpg" alt="Find a job" className="hero" />
+      </div>
+
+      {/* Search + Filters */}
+      <section className="card grid">
         <input
           className="input"
-          placeholder="Search business, title, city, state, zip"
+          placeholder="Search by Business, Job Title, City, State, Zip"
           value={q}
           onChange={e => setQ(e.target.value)}
         />
@@ -55,29 +63,31 @@ export default function Home() {
           <option value="">All Categories</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-      </div>
+      </section>
 
+      {/* Job cards */}
       <section className="jobs-grid">
         {filtered.map(job => (
           <article key={job.id} className="card">
-            <div className="pill">BBB Accredited</div>
-            <h3 style={{ margin: '8px 0 4px' }}>{job.title}</h3>
-            <div style={{ color: '#2c5560', fontWeight: 600 }}>{job.businessName}</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-              {(job.city || job.state || job.postalCode) && (
-                <span className="badge">{[job.city, job.state, job.postalCode].filter(Boolean).join(', ')}</span>
+            <div className="row">
+              {job.logoUrl && (
+                <img src={job.logoUrl} alt="" style={{width: 44, height: 44, objectFit:'contain'}} />
               )}
-              {job.category && <span className="badge">{job.category}</span>}
-              {job.employmentType && <span className="badge">{job.employmentType}</span>}
+              <div>
+                <h3 style={{ margin: '0 0 4px' }}>{job.title}</h3>
+                <div className="small" style={{ fontWeight: 700 }}>
+                  {job.businessUrl
+                    ? <a href={job.businessUrl} target="_blank" rel="noopener noreferrer">{job.businessName}</a>
+                    : job.businessName}
+                </div>
+              </div>
             </div>
-            {job.description && <p style={{ marginTop: 8 }}>{job.description.slice(0, 140)}{job.description.length > 140 ? '…' : ''}</p>}
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <a className="button" href={`/job/${job.id}`}>View Details</a>
-              {job.applyUrl && <a className="button secondary" href={job.applyUrl} target="_blank" rel="noopener noreferrer">Apply</a>}
-            </div>
-          </article>
-        ))}
-      </section>
-    </main>
-  );
-}
+
+            <div className="meta">
+              {(job.city || job.state || job.postalCode) && (
+                <div className="row">
+                  <span className="badge">{[job.city, job.state, job.postalCode].filter(Boolean).join(', ')}</span>
+                  {job.jobLocationType && <span className="badge">{job.jobLocationType}</span>}
+                </div>
+              )}
+              {job.category && <div className="row"><span className="badge">{j
