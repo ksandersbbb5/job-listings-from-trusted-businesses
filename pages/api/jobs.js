@@ -1,5 +1,5 @@
 // pages/api/jobs.js
-import { getJobs } from '../../fetchJobs'; // <-- root-level file
+import { getJobs } from '../../lib/fetchJobs.js'; // <-- note the .js
 
 export default async function handler(_req, res) {
   try {
