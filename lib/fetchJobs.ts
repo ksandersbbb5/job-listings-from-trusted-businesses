@@ -1,6 +1,5 @@
 // lib/fetchJobs.ts
 
-// Self-contained Job type (no external imports)
 export type Job = {
   id: string;
   title: string;
@@ -12,8 +11,8 @@ export type Job = {
   postalCode?: string;
   streetAddress?: string;
   description?: string;
-  datePosted?: string;   // ISO
-  validThrough?: string; // ISO
+  datePosted?: string;
+  validThrough?: string;
   employmentType?: string;
   baseSalary?: string;
   applyUrl?: string;
@@ -41,7 +40,7 @@ function firstDefined<T>(...vals: (T | undefined | null)[]): T | undefined {
   return undefined;
 }
 
-// RFC-4180-ish CSV parser (handles quotes, commas, newlines, double quotes)
+// Simple RFC-4180ish CSV parser
 function parseCSV(text: string): any[] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -50,52 +49,22 @@ function parseCSV(text: string): any[] {
 
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
-
     if (inQuotes) {
       if (c === '"') {
-        // escaped quote
-        if (text[i + 1] === '"') {
-          field += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
+        if (text[i + 1] === '"') { field += '"'; i++; } else { inQuotes = false; }
       } else {
         field += c;
       }
     } else {
-      if (c === '"') {
-        inQuotes = true;
-      } else if (c === ',') {
-        row.push(field);
-        field = '';
-      } else if (c === '\n') {
-        row.push(field);
-        rows.push(row);
-        row = [];
-        field = '';
-      } else if (c === '\r') {
-        // ignore CR; LF will handle the row end
-      } else {
-        field += c;
-      }
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c === '\r') { /* ignore */ }
+      else { field += c; }
     }
   }
-
-  // flush last field/row
-  if (inQuotes) {
-    // unclosed quote — best effort: close row
-    inQuotes = false;
-  }
-  if (field.length > 0 || row.length > 0) {
-    row.push(field);
-    rows.push(row);
-  }
-
-  // remove empty trailing rows
-  while (rows.length && rows[rows.length - 1].every((f) => f.trim() === '')) {
-    rows.pop();
-  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  while (rows.length && rows[rows.length - 1].every((f) => f.trim() === '')) rows.pop();
   if (rows.length === 0) return [];
 
   const headers = rows[0].map((h) => h.trim());
@@ -104,45 +73,32 @@ function parseCSV(text: string): any[] {
     const cur = rows[r];
     if (cur.every((f) => f.trim() === '')) continue;
     const obj: Record<string, string> = {};
-    for (let c = 0; c < headers.length; c++) {
-      obj[headers[c]] = (cur[c] ?? '').trim();
-    }
+    for (let c = 0; c < headers.length; c++) obj[headers[c]] = (cur[c] ?? '').trim();
     out.push(obj);
   }
   return out;
 }
 
-// Try JSON first; if it fails, parse CSV
 async function fetchRaw(): Promise<any[]> {
   if (!SHEET_URL) throw new Error('Missing SHEET_URL env var');
   const res = await fetch(SHEET_URL, { cache: 'no-store' });
   const text = await res.text();
-
-  // JSON (array or { data: [...] })
   try {
     const json = JSON.parse(text);
-    if (Array.isArray(json)) return json as any[];
-    if (Array.isArray((json as any).data)) return (json as any).data as any[];
-  } catch {
-    // Not JSON; fall through
-  }
-
-  // CSV
+    if (Array.isArray(json)) return json;
+    if (Array.isArray((json as any).data)) return (json as any).data;
+  } catch {}
   return parseCSV(text);
 }
 
 export async function getJobs(): Promise<Job[]> {
   const rows = await fetchRaw();
-
   const jobs: Job[] = rows.map((row: any, i: number) => {
     const n: Record<string, any> = {};
     Object.keys(row || {}).forEach((k) => (n[normalizeKey(k)] = row[k]));
-
     const title = firstDefined<string>(n.job_title, n.title, n.position, n.role);
     const businessName = firstDefined<string>(n.business_name, n.company, n.employer, n.organization);
-
     const id = slugify([businessName, title, n.city, n.state, i].filter(Boolean).join('-'));
-
     const job: Job = {
       id,
       title: title || 'Job Opening',
@@ -159,22 +115,14 @@ export async function getJobs(): Promise<Job[]> {
       employmentType: firstDefined(n.employment_type, n.type, n.job_type),
       baseSalary: firstDefined(n.salary, n.base_salary, n.compensation),
       applyUrl: firstDefined(n.apply_url, n.url, n.job_url, n.listing_url),
-      email: firstDefined(n.apply_email, n.email),
+      email: firstDefined(n.apply_email, n.email)
     };
-
     return job;
   });
-
-  // Filter out rows without core fields
   return jobs.filter((j) => j.title && j.businessName);
 }
 
 export async function getJobById(id: string): Promise<Job | undefined> {
   const jobs = await getJobs();
   return jobs.find((j) => j.id === id);
-}
-
-export async function getCategories(): Promise<string[]> {
-  const jobs = await getJobs();
-  return jobs.map((j) => j.category).filter(Boolean) as string[];
 }
