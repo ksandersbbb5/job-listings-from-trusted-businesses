@@ -19,13 +19,17 @@
     "paths": {
       "@/*": ["*"],
       "@/lib/*": ["lib/*"],
-      "@/types": ["types.ts"]
-    }
+      "@/types": ["types.ts"],
+      "@/styles/*": ["styles/*"]
+    },
+
+    "plugins": [{ "name": "next" }]
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "**/*.d.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
