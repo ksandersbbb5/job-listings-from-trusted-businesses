@@ -90,4 +90,35 @@ export default function Home() {
                   {job.jobLocationType && <span className="badge">{job.jobLocationType}</span>}
                 </div>
               )}
-              {job.category && <div className="row"><span className="badge">{j
+              {job.category && <div className="row"><span className="badge">{job.category}</span></div>}
+              {job.employmentType && <div className="row"><span className="badge">{job.employmentType}</span></div>}
+              {(job.baseCompensation || job.baseSalaryValue) && (
+                <div className="small">
+                  Compensation: {job.baseCompensation || (job.baseSalaryValue && `$${job.baseSalaryValue}`)} {job.baseCompensationUnit ? `/${job.baseCompensationUnit}` : ''}
+                  {job.compensationType ? ` · ${job.compensationType}` : ''}
+                </div>
+              )}
+              {job.benefits && <div className="small">Benefits: {job.benefits}</div>}
+              {job.workingHours && <div className="small">Hours: {job.workingHours}</div>}
+              {job.datePosted && <div className="small">Posted: {new Date(job.datePosted).toLocaleDateString()}</div>}
+              {job.validThrough && <div className="small">Expires: {new Date(job.validThrough).toLocaleDateString()}</div>}
+            </div>
+
+            {job.description && (
+              <p style={{ marginTop: 8 }}>
+                {job.description.length > 220 ? job.description.slice(0, 220) + '…' : job.description}
+              </p>
+            )}
+
+            <div className="row" style={{ marginTop: 10 }}>
+              <a className="button" href={`/job/${job.id}`}>View Details</a>
+              {job.applyUrl && (
+                <a className="button secondary" href={job.applyUrl} target="_blank" rel="noopener noreferrer">Apply</a>
+              )}
+            </div>
+          </article>
+        ))}
+      </section>
+    </main>
+  );
+}
