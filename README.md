@@ -3,6 +3,8 @@ An SEO-friendly job board for **BBB Accredited Businesses**, with **Google JobPo
 
 
 
+
+
 ## Quick Start
 1. **Create the repo** (GitHub) named `bbb-`.
 2. **Copy files** in this project structure.
