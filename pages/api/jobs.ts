@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getJobs } from '../../lib/fetchJobs';
+import { getJobs } from '@/lib/fetchJobs';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
   try {
     const jobs = await getJobs();
     res.status(200).json({ jobs });
